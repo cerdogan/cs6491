@@ -1,37 +1,62 @@
-// balls colliding in 3D
-float dz=0; // distance to camera. Manipulated with wheel or when 
+/**
+ * @file collidingBalls.pde
+ * @author Jarek Rossignac, Can Erdogan
+ * @date 2015-09-01
+ * @brief A processing program to visualize a set of balls colliding bounded in a cube bounding box. Assignment 1 for CS 6941 class.
+ * Initial code provided by Prof. Rossignac, and as assignment, Can Erdogan fills out the collision checking/handling segment.
+ */
+
+/* *************************************************************************************************************************************************/
+// Visualization options
+
+float dz=-150f; // distance to camera. Manipulated with wheel or when 
 float rx=-0.06*TWO_PI, ry=-0.04*TWO_PI;    // view angles manipulated when space pressed but not mouse
-Boolean animating=true, tracking=false, center=true, showNormals=false;
-float t=0, s=0;
-float w=400; // half-size of the cube
-float mv=1; // magnifier of max initial speed of the balls
 pt F = P(0,0,0);  // focus point:  the camera is looking at it (moved when 'f or 'F' are pressed
 pt Of=P(100,100,0), Ob=P(110,110,0); // red point controlled by the user via mouseDrag : used for inserting vertices ...
-// int nbs = 2; // number of balls = nbs*nbs*nbs
-int nbs = 10; // number of balls = nbs*nbs*nbs
-float br = 20; // ball radius
+Boolean animating=true, tracking=false, center=true, showNormals=false;
+float w=400; // half-size of the cube
+boolean stop=false; // stops animation if computation took  more than u
+boolean individual=false;  //< stops animation when two balls collide
+boolean showV=false; 
+float t0=0, t1=0, t2=0, t3=0, t4=0, dt01=0, dt12=0, dt23=0, dt34=0; // ti = lap times per frame, and durations in % of u
 int Frate=20;
 float u = 1./Frate; // time between consecutive frames
-boolean stop=false; // stops animation if computation took  more than u
-boolean individual=false, showV=false;
-float t0=0, t1=0, t2=0, t3=0, t4=0, dt01=0, dt12=0, dt23=0, dt34=0; // ti = lap times per frame, and durations in % of u
-int collisions=0;
 
+/* *************************************************************************************************************************************************/
+// Physics options
+
+float t=0; // animation time
+float s=0; // no idea...
+float mv=1; // magnifier of max initial speed of the balls
+int nbs = 2; // number of balls = nbs*nbs*nbs
+float br = 20; // ball radius
+int collisions=0;  // # of collisions
+
+/* *************************************************************************************************************************************************/
 void setup() {
-  myFace = loadImage("data/pic.jpg");  // load image from file pic.jpg in folder data *** replace that file with your pic of your own face
+  
+  // Setup the screen
+  myFace = loadImage("data/pic.jpg");  
   textureMode(NORMAL);          
   size(600, 600, P3D); // p3D means that we will do 3D graphics
-  P.declare(); Q.declare(); PtQ.declare(); // declare 3 sets of balls (we advect and animate P, othres used for copy
-  // P.loadBALLS("data/BALLS");  // loads saved model from file
-  // Q.loadBALLS("data/BALLS2");  // loads saved model from file
+  
+  // Declare 3 sets of balls (we advect and animate P, othres used for copy
+  P.declare(); 
+  Q.declare(); 
+  PtQ.declare(); 
+  
+  // Enforce relationship between ball volume and the cube volume
   br=w/(nbs*pow(PI*120/4,1./3));
   P.initPointsOnGrid(nbs,w,br,cyan);
   F = P();
+  
+  // Set the sphere detail and the framerate (affects visualization cpu usage)
   sphereDetail(6);
   frameRate(Frate);
   noSmooth();
-  }
+}
 
+/* *************************************************************************************************************************************************/
 void draw() {
   t0 = millis();
   background(255);
@@ -64,7 +89,7 @@ void draw() {
  
    t3 = millis();
    P.showBalls(); 
-   if(showV) P.showVelocities(30); 
+   if(showV) P.showVelocities(br*2); 
    pt Picked = pick( mouseX, mouseY);
    if(picking) {P.pickClosestTo(Picked); picking=false;}
    P.showPickedBall();
@@ -83,15 +108,17 @@ void draw() {
   if(!stop) {dt01=(t1-t0)/10/u; dt12=(t2-t1)/10/u; dt23=(t3-t2)/10/u; dt34=(t4-t3)/10/u;}
   scribe("nbs = "+nbs+", "+(nbs*nbs*nbs)+" balls, "+nf(collisions,3,0)+" collisions per frame",10,40); 
   scribe("dt01 = "+nf(dt01,2,1)+"%, dt12 = "+nf(dt12,2,1)+"%, dt23 = "+nf(dt23,2,1)+"%, dt34 = "+nf(dt34,2,1)+"%",10,60); 
-  if(filming && (animating || change)) saveFrame("FRAMES/F"+nf(frameCounter++,4)+".png");  // save next frame to make a movie
+  if(filming && (animating || change)) 
+    saveFrame("FRAMES/F"+nf(frameCounter++,4)+".png");  // save next frame to make a movie
 
   if((t4-t0)/10/u>99 || stop) {
     scribe("dt01 = "+nf(dt01,2,1)+"%, dt12 = "+nf(dt12,2,1)+"%, dt23 = "+nf(dt23,2,1)+"%, dt34 = "+nf(dt34,2,1)+"%. STOPPED !",10,80); 
     stop=true;
     }
   change=false; // to avoid capturing frames when nothing happens (change is set uppn action)
-  }
-  
+}
+
+/* *************************************************************************************************************************************************/
 void keyPressed() {
   if(key=='`') picking=true; 
   if(key=='?') scribeText=!scribeText;
@@ -99,13 +126,20 @@ void keyPressed() {
   if(key=='~') filming=!filming;
   if(key=='/') stop=!stop;
   if(key=='v') showV=!showV;
+  
+  // Stop animation when two balls collide (see balls.pde)
   if(key=='I') individual=!individual;
+  
   if(key=='i') {P.initPointsOnGrid(nbs,w,br,cyan); stop=false;}
   if(key=='a') animating=!animating; // toggle animation
   if(key=='h') {F = P();}  // "home": reserts Focus point F
   if(key=='+') {nbs++; br=w/(nbs*pow(PI*120/4,1./3)); P.initPointsOnGrid(nbs,w,br,cyan); stop=true;}
   if(key=='-') {nbs=max(1,nbs-1); br=w/(nbs*pow(PI*120/4,1./3)); P.initPointsOnGrid(nbs,w,br,cyan); stop=true;}
+  
+  // Restart animation
   if(key=='r') {br=w/(nbs*pow(PI*120/4,1./3)); P.initPointsOnGrid(nbs,w,br,cyan); stop=true;}
+  
+  // Change sphere detail
   if(key=='4') sphereDetail(4);
   if(key=='5') sphereDetail(5);
   if(key=='6') sphereDetail(6);
@@ -120,8 +154,6 @@ void keyPressed() {
   if(key=='q') Q.copyFrom(P); // to save current configuration
   if(key=='p') P.copyFrom(Q); // to restore it
   if(key=='e') {PtQ.copyFrom(Q);Q.copyFrom(P);P.copyFrom(PtQ);}
-  // if(key=='=') {bu=fu; bv=fv;}
-  // if(key=='.') F=P.Picked(); // snaps focus F to the selected point of P (easier to rotate and zoom while keeping it in center)
   if(key=='c') center=!center; // snaps focus F to the selected vertex of P (easier to rotate and zoom while keeping it in center)
   if(key=='t') tracking=!tracking; // snaps focus F to the selected vertex of P (easier to rotate and zoom while keeping it in center)
   if(key=='x' || key=='z' || key=='d') P.setPickedTo(pp); // picks the vertex of P that has closest projeciton to mouse
@@ -135,12 +167,19 @@ void keyPressed() {
   change=true;
   }
 
-void mouseWheel(MouseEvent event) {dz += event.getAmount(); change=true;}
+/* *************************************************************************************************************************************************/
+void mouseWheel(MouseEvent event) {
+  dz += event.getAmount();
 
+  change=true;
+}
+
+/* *************************************************************************************************************************************************/
 void mousePressed() {
    if (!keyPressed) picking=true;
-  }
-  
+}
+
+/* *************************************************************************************************************************************************/
 void mouseMoved() {
   if (keyPressed && key==' ') {rx-=PI*(mouseY-pmouseY)/height; ry+=PI*(mouseX-pmouseX)/width;};
   if (keyPressed && key=='s') dz+=(float)(mouseY-pmouseY); // approach view (same as wheel)
@@ -149,6 +188,8 @@ void mouseMoved() {
   //     v+=(float)(mouseY-pmouseY)/height; v=max(min(v,1),0); 
   //     } 
   }
+  
+/* *************************************************************************************************************************************************/
 void mouseDragged() {
   if (!keyPressed) {Of.add(ToIJ(V((float)(mouseX-pmouseX),(float)(mouseY-pmouseY),0))); }
   if (keyPressed && key==CODED && keyCode==SHIFT) {Of.add(ToK(V((float)(mouseX-pmouseX),(float)(mouseY-pmouseY),0)));};
@@ -168,17 +209,22 @@ void mouseDragged() {
   if (keyPressed && key=='b') {br+=10.*(float)(mouseX-pmouseX)/width; P.initPointsOnGrid(nbs,w,br,cyan); stop=true;} // adjust animation speed
   }  
 
+/* *************************************************************************************************************************************************/
 // **** Header, footer, help text on canvas
 void displayHeader() { // Displays title and authors face on screen
     scribeHeader(title,0); scribeHeaderRight(name); 
-    fill(white); image(myFace, width-myFace.width/2,25,myFace.width/2,myFace.height/2); 
-    }
+    fill(white); 
+    // image(myFace, width-myFace.width/2,25,myFace.width/2,myFace.height/2); 
+}
+
+/* *************************************************************************************************************************************************/
 void displayFooter() { // Displays help text at the bottom
     scribeFooter(guide,1); 
     scribeFooter(menu,0); 
     }
 
-String title ="6491-2015-P1: Animation of colliding balls", name ="Your Name here!",
+/* *************************************************************************************************************************************************/
+String title ="6491-2015-P1: Animation of colliding balls", name ="Can Erdogan",
        menu="?:help, !:picture, ~:videotape, space:rotate, s/wheel:closer, f/F:refocus, a:anim, #:quit",
        guide="i:reinitialize, a:animate, v:show Vs, +/-: # balls. DRAG b:radius, m:faster"; 
        // user's guide

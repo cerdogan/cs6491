@@ -14,22 +14,24 @@ float rx=-0.06*TWO_PI, ry=-0.04*TWO_PI;    // view angles manipulated when space
 pt F = P(0,0,0);  // focus point:  the camera is looking at it (moved when 'f or 'F' are pressed
 pt Of=P(100,100,0), Ob=P(110,110,0); // red point controlled by the user via mouseDrag : used for inserting vertices ...
 Boolean animating=true, tracking=false, center=true, showNormals=false;
-float w=400; // half-size of the cube
 boolean stop=false; // stops animation if computation took  more than u
 boolean individual=false;  //< stops animation when two balls collide
 boolean showV=false; 
 float t0=0, t1=0, t2=0, t3=0, t4=0, dt01=0, dt12=0, dt23=0, dt34=0; // ti = lap times per frame, and durations in % of u
 int Frate=20;
-float u = 1./Frate; // time between consecutive frames
+
 
 /* *************************************************************************************************************************************************/
 // Physics options
 
-float t=0; // animation time
+float frameTime = 1./Frate; // time between consecutive frames, used to be 'u' 
+float animationTime = 0; // animation time
+
 float s=0; // no idea...
 float mv=1; // magnifier of max initial speed of the balls
 int nbs = 2; // number of balls = nbs*nbs*nbs
 float br = 20; // ball radius
+float w=400; // half-size of the cube 
 int collisions=0;  // # of collisions
 
 /* *************************************************************************************************************************************************/
@@ -79,7 +81,59 @@ void setupScene() {
 }
 
 /* *************************************************************************************************************************************************/
+float wallCollisionTime (pt P, vec V) {
+  
+  // Handle the wall on the -x
+  float time_xn = (-w/2 + br - P.x) / (V.x);
+  float time_xp = (w/2 - br - P.x) / (V.x);
+  float time_yn = (-w/2 + br - P.y) / (V.y);
+  float time_yp = (w/2 - br - P.y) / (V.y);
+  float time_zn = (-w/2 + br - P.z) / (V.z);
+  float time_zp = (w/2 - br - P.z) / (V.z);
+  
+  // Find the minimum positive value
+  float minTime = 10000.0;
+  if((time_xn > 0) && (time_xn < minTime)) minTime = time_xn;
+  if((time_xp > 0) && (time_xp < minTime)) minTime = time_xp;
+  if((time_yn > 0) && (time_yn < minTime)) minTime = time_yn;
+  if((time_yp > 0) && (time_yp < minTime)) minTime = time_yp;
+  if((time_zn > 0) && (time_zn < minTime)) minTime = time_zn;
+  if((time_zp > 0) && (time_zp < minTime)) minTime = time_zp;
+  
+  return minTime;
+}
+
+/* *************************************************************************************************************************************************/
+float ballsCollisionTime (pt P1, vec V1, pt P2, vec V2) {
+  
+  // Get the coefficients of the quadratic equation in time
+  vec v21 = M(V2,V1);
+  float a = dot(v21,v21);
+  vec p21 = V(P1,P2);
+  float b = 2 * dot(p21,v21);
+  float c = dot(p21,p21) - 4 * br * br;
+  
+  // Solve the quadratic
+  float discriminant = b*b - 4*a*c;
+  if(discriminant < 0) return -1;
+  float disSqrt = sqrt(discriminant);
+  float sol1 = (-b - disSqrt) / (2 * a);
+  float sol2 = (-b + disSqrt) / (2 * a);
+  if((sol1 < 0) && (sol2 < 0)) return -1;
+  
+  // Return the minimal positive solution
+  if(sol1 < 0) return sol2;
+  else return sol1;
+}
+
+/* *************************************************************************************************************************************************/
+Boolean stopForever = false;
+float firstCollisionTime = 10000000; // for the individual part of the project
+Boolean collisionTimeSet = false;
+float motionTime = 0.0;
 void draw() {
+  
+  print ("stopForever: " + stopForever + ", firstCollisionTime: " + firstCollisionTime + ", motionTime: " + motionTime + "\n");
   
   // Part 1: Setup the scene
   t0 = millis();
@@ -89,21 +143,55 @@ void draw() {
   // -------------------------------------------------------------------------------------------------
   // Part 2: Handle physics
   collisions=0;
+
+  // Find the first collision time
+  Boolean wallCase = false;
+  float minTime = 10000000.0;
+  int p1 = -1, p2 = -1;    //< indices for the first collision
+  for (int v=0; v<P.nv; v++) {
+    
+    // Check for ball-ball collisions
+    for (int v2=v+1; v2<P.nv; v2++) {
+      float time = ballsCollisionTime(P.G[v], P.V[v], P.G[v2], P.V[v2]);
+      if((time > 0) && (time < minTime)) {
+        minTime = time;
+        p1 = v;
+        p2 = v2;
+        wallCase = false;
+      }
+    }
+    
+    // Check for ball-wall collisions
+    float time = wallCollisionTime(P.G[v], P.V[v]);
+    if(time < minTime) {
+      minTime = time;
+      p1 = v;
+      p2 = -1;
+      wallCase = true;
+    }
+  }
+
+  // Set the first collision time
+  if(!collisionTimeSet) {
+    firstCollisionTime = motionTime + minTime;
+    collisionTimeSet = true;
+  }
+  
+  print ("minTime: " + minTime + ", (" + p1 + ", " + p2 + "), wall case: " + wallCase + "\n");
+  t2 = millis();
    
+  // -------------------------------------------------------------------------------------------------
+  // Part 3: Simulate the ball motion
+     
   // Compute the new positions and velocities in the given frame
-  if(animating && !stop) {
+  if(animating && !stop && !stopForever) {
     P.advectBalls(mv); 
     P.resetColors(cyan); 
     P.bounceBalls(w);
+    motionTime += mv;
   }
 
-   t2 = millis();
-   
-   // -------------------------------------------------------------------------------------------------
-   // Part 3: Simulate the ball motion? your animation module that simulates ball motion between framesgoes here
-   
-   
-   t3 = millis();
+  t3 = millis();
    
    // -------------------------------------------------------------------------------------------------
    // Part 4: Display the balls, velocities, text, etc.
@@ -118,29 +206,35 @@ void draw() {
    
    popMatrix(); // done with 3D drawing. Restore front view for writing text on canvas
   
-  // for demos: shows the mouse and the key pressed (but it may be hidden by the 3D model)
-  //  if(keyPressed) {stroke(red); fill(white); ellipse(mouseX,mouseY,26,26); fill(red); text(key,mouseX-5,mouseY+4);}
-  
   if(scribeText) {fill(black); displayHeader();} // dispalys header on canvas, including my face
   if(scribeText && !filming) displayFooter(); // shows menu at bottom, only if not filming
-  if (animating) { t+=PI/180/2; if(t>=TWO_PI) t=0; s=(cos(t)+1.)/2; } // periodic change of time 
+  if (animating) { // periodic change of time 
+    animationTime+=PI/180/2; 
+    if(animationTime>=TWO_PI) 
+      animationTime=0; 
+    s=(cos(animationTime)+1.)/2; 
+  }  
   t4 = millis();
   if(!stop) {
-    dt01=(t1-t0)/10/u; 
-    dt12=(t2-t1)/10/u; 
-    dt23=(t3-t2)/10/u; 
-    dt34=(t4-t3)/10/u;
+    dt01=(t1-t0)/10/frameTime; 
+    dt12=(t2-t1)/10/frameTime; 
+    dt23=(t3-t2)/10/frameTime; 
+    dt34=(t4-t3)/10/frameTime;
   }
   scribe("nbs = "+nbs+", "+(nbs*nbs*nbs)+" balls, "+nf(collisions,3,0)+" collisions per frame",10,40); 
   scribe("dt01 = "+nf(dt01,2,1)+"%, dt12 = "+nf(dt12,2,1)+"%, dt23 = "+nf(dt23,2,1)+"%, dt34 = "+nf(dt34,2,1)+"%",10,60); 
   if(filming && (animating || change)) 
     saveFrame("FRAMES/F"+nf(frameCounter++,4)+".png");  // save next frame to make a movie
 
-  if((t4-t0)/10/u>99 || stop) {
+  if((t4-t0)/10/frameTime>99 || stop) {
     scribe("dt01 = "+nf(dt01,2,1)+"%, dt12 = "+nf(dt12,2,1)+"%, dt23 = "+nf(dt23,2,1)+"%, dt34 = "+nf(dt34,2,1)+"%. STOPPED !",10,80); 
     stop=true;
     }
   change=false; // to avoid capturing frames when nothing happens (change is set uppn action)
+  
+  
+  if((motionTime + mv) > firstCollisionTime) stopForever = true; 
+  
 }
 
 /* *************************************************************************************************************************************************/
@@ -155,8 +249,19 @@ void keyPressed() {
   // Stop animation when two balls collide (see balls.pde)
   if(key=='I') individual=!individual;
   
-  if(key=='i') {P.initPointsOnGrid(nbs,w,br,cyan); stop=false;}
-  if(key=='a') animating=!animating; // toggle animation
+  if(key=='i') {
+    P.initPointsOnGrid(nbs,w,br,cyan); 
+    stop=false;
+    stopForever = false;
+    firstCollisionTime = 10000000; // for the individual part of the project
+    collisionTimeSet = false;
+    motionTime = 0.0;
+  }
+  if(key=='a') {
+    animating=!animating; // toggle animation
+    stopForever = false;
+  }
+  
   if(key=='h') {F = P();}  // "home": reserts Focus point F
   if(key=='+') {nbs++; br=w/(nbs*pow(PI*120/4,1./3)); P.initPointsOnGrid(nbs,w,br,cyan); stop=true;}
   if(key=='-') {nbs=max(1,nbs-1); br=w/(nbs*pow(PI*120/4,1./3)); P.initPointsOnGrid(nbs,w,br,cyan); stop=true;}
@@ -239,7 +344,7 @@ void mouseDragged() {
 void displayHeader() { // Displays title and authors face on screen
     scribeHeader(title,0); scribeHeaderRight(name); 
     fill(white); 
-    // image(myFace, width-myFace.width/2,25,myFace.width/2,myFace.height/2); 
+    image(myFace, width-myFace.width/2,25,myFace.width/2,myFace.height/2); 
 }
 
 /* *************************************************************************************************************************************************/

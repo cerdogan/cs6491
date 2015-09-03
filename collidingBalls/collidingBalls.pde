@@ -57,55 +57,80 @@ void setup() {
 }
 
 /* *************************************************************************************************************************************************/
-void draw() {
-  t0 = millis();
+/// Sets up the camera view, the box, the ground and etc.
+void setupScene() {
   background(255);
   pushMatrix();   // to ensure that we can restore the standard view before writing on the canvas
+  camera();       // sets a standard perspective
+  translate(width/2,height/2,dz); // puts origin of model at screen center and moves forward/away by dz
+  lights();  // turns on view-dependent lighting
+  rotateX(rx); rotateY(ry); // rotates the model around the new origin (center of screen)
+  rotateX(PI/2); // rotates frame around X to make X and Y basis vectors parallel to the floor
+  if(center) translate(-F.x,-F.y,-F.z);
+  noStroke(); // if you use stroke, the weight (width) of it will be scaled with you scaleing factor
+  showFrame(50); // X-red, Y-green, Z-blue arrows
+  fill(yellow); pushMatrix(); translate(0,0,-w/2-1.5); box(w,w,1); popMatrix(); // draws floor as thin plate
+  noFill(); stroke(black); showBlock(w,w,w,0,0,0  ,0);
+  fill(magenta); show(F,4); // magenta focus point (stays at center of screen)
+  fill(magenta,100); showShadow(F,5); // magenta translucent shadow of focus point (after moving it up with 'F'
   
-    camera();       // sets a standard perspective
-    translate(width/2,height/2,dz); // puts origin of model at screen center and moves forward/away by dz
-    lights();  // turns on view-dependent lighting
-    rotateX(rx); rotateY(ry); // rotates the model around the new origin (center of screen)
-    rotateX(PI/2); // rotates frame around X to make X and Y basis vectors parallel to the floor
-    if(center) translate(-F.x,-F.y,-F.z);
-    noStroke(); // if you use stroke, the weight (width) of it will be scaled with you scaleing factor
-    showFrame(50); // X-red, Y-green, Z-blue arrows
-    fill(yellow); pushMatrix(); translate(0,0,-w/2-1.5); box(w,w,1); popMatrix(); // draws floor as thin plate
-    noFill(); stroke(black); showBlock(w,w,w,0,0,0  ,0);
-    fill(magenta); show(F,4); // magenta focus point (stays at center of screen)
-    fill(magenta,100); showShadow(F,5); // magenta translucent shadow of focus point (after moving it up with 'F'
+  computeProjectedVectors(); // computes screen projections I, J, K of basis vectors (see bottom of pv3D): used for dragging in viewer's frame    
+  pp=P.idOfVertexWithClosestScreenProjectionTo(Mouse()); // id of vertex of P with closest screen projection to mouse (us in keyPressed 'x'...
+}
 
-//   fill(magenta); noStroke(); show(pick(mouseX,mouseY),10);
-   computeProjectedVectors(); // computes screen projections I, J, K of basis vectors (see bottom of pv3D): used for dragging in viewer's frame    
-   pp=P.idOfVertexWithClosestScreenProjectionTo(Mouse()); // id of vertex of P with closest screen projection to mouse (us in keyPressed 'x'...
-
-   t1 = millis();
-   // your physics module that compute future events goes here
-   collisions=0;
-   if(animating && !stop) {P.advectBalls(mv); P.resetColors(cyan); P.bounceBalls(w);} // advection
+/* *************************************************************************************************************************************************/
+void draw() {
+  
+  // Part 1: Setup the scene
+  t0 = millis();
+  setupScene();
+  t1 = millis();
+   
+  // -------------------------------------------------------------------------------------------------
+  // Part 2: Handle physics
+  collisions=0;
+   
+  // Compute the new positions and velocities in the given frame
+  if(animating && !stop) {
+    P.advectBalls(mv); 
+    P.resetColors(cyan); 
+    P.bounceBalls(w);
+  }
 
    t2 = millis();
-   // your animation module that simulates ball motion between framesgoes here
- 
+   
+   // -------------------------------------------------------------------------------------------------
+   // Part 3: Simulate the ball motion? your animation module that simulates ball motion between framesgoes here
+   
+   
    t3 = millis();
+   
+   // -------------------------------------------------------------------------------------------------
+   // Part 4: Display the balls, velocities, text, etc.
+   
    P.showBalls(); 
    if(showV) P.showVelocities(br*2); 
    pt Picked = pick( mouseX, mouseY);
    if(picking) {P.pickClosestTo(Picked); picking=false;}
    P.showPickedBall();
-
+  
    fill(blue); show(Picked,3); fill(red,100); showShadow(Picked,5,-w/2);  // show picked point and its shadow
    
    popMatrix(); // done with 3D drawing. Restore front view for writing text on canvas
-
-      // for demos: shows the mouse and the key pressed (but it may be hidden by the 3D model)
-      //  if(keyPressed) {stroke(red); fill(white); ellipse(mouseX,mouseY,26,26); fill(red); text(key,mouseX-5,mouseY+4);}
-      
+  
+  // for demos: shows the mouse and the key pressed (but it may be hidden by the 3D model)
+  //  if(keyPressed) {stroke(red); fill(white); ellipse(mouseX,mouseY,26,26); fill(red); text(key,mouseX-5,mouseY+4);}
+  
   if(scribeText) {fill(black); displayHeader();} // dispalys header on canvas, including my face
   if(scribeText && !filming) displayFooter(); // shows menu at bottom, only if not filming
   if (animating) { t+=PI/180/2; if(t>=TWO_PI) t=0; s=(cos(t)+1.)/2; } // periodic change of time 
   t4 = millis();
-  if(!stop) {dt01=(t1-t0)/10/u; dt12=(t2-t1)/10/u; dt23=(t3-t2)/10/u; dt34=(t4-t3)/10/u;}
+  if(!stop) {
+    dt01=(t1-t0)/10/u; 
+    dt12=(t2-t1)/10/u; 
+    dt23=(t3-t2)/10/u; 
+    dt34=(t4-t3)/10/u;
+  }
   scribe("nbs = "+nbs+", "+(nbs*nbs*nbs)+" balls, "+nf(collisions,3,0)+" collisions per frame",10,40); 
   scribe("dt01 = "+nf(dt01,2,1)+"%, dt12 = "+nf(dt12,2,1)+"%, dt23 = "+nf(dt23,2,1)+"%, dt34 = "+nf(dt34,2,1)+"%",10,60); 
   if(filming && (animating || change)) 
@@ -124,7 +149,7 @@ void keyPressed() {
   if(key=='?') scribeText=!scribeText;
   if(key=='!') snapPicture();
   if(key=='~') filming=!filming;
-  if(key=='/') stop=!stop;
+  if(key=='x' || key=='/') stop=!stop;
   if(key=='v') showV=!showV;
   
   // Stop animation when two balls collide (see balls.pde)
@@ -156,9 +181,9 @@ void keyPressed() {
   if(key=='e') {PtQ.copyFrom(Q);Q.copyFrom(P);P.copyFrom(PtQ);}
   if(key=='c') center=!center; // snaps focus F to the selected vertex of P (easier to rotate and zoom while keeping it in center)
   if(key=='t') tracking=!tracking; // snaps focus F to the selected vertex of P (easier to rotate and zoom while keeping it in center)
-  if(key=='x' || key=='z' || key=='d') P.setPickedTo(pp); // picks the vertex of P that has closest projeciton to mouse
+  //if(key=='x' || key=='z' || key=='d') P.setPickedTo(pp); // picks the vertex of P that has closest projeciton to mouse
   if(key=='d') P.deletePicked();
-  if(key=='i') P.insertClosestProjection(Of); // Inserts new vertex in P that is the closeset projection of O
+ // if(key=='i') P.insertClosestProjection(Of); // Inserts new vertex in P that is the closeset projection of O   //< the letter 'i' is used above!
   if(key=='W') {P.saveBALLS("data/BALLS"); Q.saveBALLS("data/BALLS2");}  // save vertices to BALLS2
   if(key=='L') {P.loadBALLS("data/BALLS"); Q.loadBALLS("data/BALLS2");}   // loads saved model
   if(key=='w') P.saveBALLS("data/BALLS");   // save vertices to BALLS

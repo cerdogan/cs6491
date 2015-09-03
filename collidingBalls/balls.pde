@@ -46,16 +46,27 @@ class BALLS { // class for manipulaitng and displaying points
   
   void showVelocities(float m) {noStroke(); fill(blue); for (int v=0; v<nv; v++) arrow(G[v],V(m,V[v]),3); }
   
-  void advectBalls(float m) {for (int v=0; v<nv; v++) G[v]=P(G[v],V(m,V[v]));}
+  /* *************************************************************************************************************************************** */
+  void advectBalls(float m) {
+    for (int v=0; v<nv; v++) { 
+      vec vel = V(m, V[v]);  // magnify the velocity V[v] with some constant m
+      G[v]=P(G[v],vel);      // move the center of the particle by the velocity vector
+    }
+  }
   
+  /* *************************************************************************************************************************************** */
   void bounceBalls(float w) {
+    
+    // Wall collisions: (1) generate new velocities, (2) change colors to green
     for (int v=0; v<nv; v++) {
       if(G[v].x<-w/2+r[v] || G[v].x>w/2-r[v]) {V[v].x=-V[v].x; c[v]=green; m[v]=del; if(individual) stop=true; collisions++;}
       if(G[v].y<-w/2+r[v] || G[v].y>w/2-r[v]) {V[v].y=-V[v].y; c[v]=green; m[v]=del; if(individual) stop=true; collisions++;}
       if(G[v].z<-w/2+r[v] || G[v].z>w/2-r[v]) {V[v].z=-V[v].z; c[v]=green; m[v]=del; if(individual) stop=true; collisions++;}
-      }
-    for (int u=0; u<nv-1; u++) 
-      for (int v=u+1; v<nv; v++) 
+    }
+    
+    // Ball-ball collisions: only change colors to red
+    for (int u=0; u<nv-1; u++) { 
+      for (int v=u+1; v<nv; v++) { 
         if(d(G[u],G[v])<r[u]+r[v]) {
             c[u]=red; 
             m[u]=del; 
@@ -63,10 +74,12 @@ class BALLS { // class for manipulaitng and displaying points
             m[v]=del; 
             if(individual) stop=true;
             collisions++;
-            }
-     
+        }
+      }
     }
-  
+  }
+    
+  /* *************************************************************************************************************************************** */
   BALLS empty() {nv=0; pv=0; return this;} // resets P so that we can start adding points
   BALLS addPt(pt P) { G[nv].setTo(P); pv=nv; nv++;  return this;} // adds a point at the end
   BALLS addPt(float x,float y) { G[nv].x=x; G[nv].y=y; pv=nv; nv++; return this;}

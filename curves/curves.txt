@@ -1,0 +1,139 @@
+\documentclass{article}
+%\documentclass{scrartcl}
+
+\usepackage[ngerman,english]{babel}
+%\usepackage[latin1]{inputenc}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{tikz}
+\usepackage{verbatim}
+\usepackage{subcaption}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage[pdftex]{hyperref}
+\usepackage{fullpage}
+
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmiccomment}[1]{\ \ // #1} % C-like // Comments
+
+\hyphenation{render}
+
+\begin{document}
+
+\title{Patterns\\
+	{\large Project 2 for class CS6491 Computer Graphics}}
+\author{Can Erdogan }
+
+\maketitle
+
+\begin{tikzpicture}[remember picture,overlay]
+   \node[anchor=north east,inner sep=10pt] at (current page.north east)
+              {\includegraphics[scale=0.7]{pic.jpg}};
+\end{tikzpicture}
+
+\section{Definitions of pattern}
+
+\noindent \textbf{My definition:} A pattern is a rule that can be deduced from data (image, nature, coordinates, etc.) that can be used to generate parts of the data from the rest. \\
+\noindent \textbf{Wikipedia definition:} A pattern is a discernible regularity in the world or in a manmade design. \\
+\noindent \textbf{Difference}: I asserted that the pattern should have sufficient information in it such that parts of the ``world''/``design'' (in wiki lingo) can be regenerated/modeled. This difference could be important from a motivation and functionality point of view because at least in positive sciences, we would like to detect patterns to make use of them.
+
+\section{Concept of beauty in patterns}
+
+\subsection{Beautiful examples}
+
+Figure \ref{fig:goods} below contains the three patterns that I thought were beautiful. 
+
+
+\begin{figure}[ht!] 
+  \centering
+  \includegraphics[width=0.7\linewidth]{g1.png}
+  \caption{Choices for beautiful pattern}
+  \label{fig:goods}
+\end{figure}
+
+
+\noindent Specifics about each picture:
+
+\begin{itemize}
+ \item \textbf{Pattern 1:}
+ 
+  \begin{enumerate}
+  \item It reminds me of the golden spline.
+  \item Finding mathematical patterns in nature is cool. (Can't go to more specifics without going philosophical :-)).
+  \item No gestalt effect.
+  \item It is a logarithmic curve that has nice higher-order continuities.
+  \end{enumerate}
+
+  \item \textbf{Pattern 2:}
+ 
+  \begin{enumerate}
+  \item It reminds me of waves in the sea - a flow procedure that is somehow regular.
+  \item The image is a mosaic of the same bent sandclock shape fitted together in different orientations. That's a challenging design.
+  \item The endpoints of six shapes seem to generate a flower like object in the middle of the frame.
+  \item There is a regularity in the image that I suspect is due to the each line segment that joins at a vertex actually approximates 60 degrees.
+  \end{enumerate}
+  
+  \item \textbf{Pattern 3:}
+ 
+  \begin{enumerate}
+  \item I like that the diagonal pattern is reinforced by the color scheme.
+  \item Most of the patterns we see are generated via 2D data and this frame makes use of additional color data to reinforce the concept of a pattern.
+  \item In the negative space between any three contorted triangles, there is a white contorted triangle.
+  \item The aesthetic principle is the exploitation of the negative space - lots of examples such as birds-fish pattern.
+  \end{enumerate}
+  
+\end{itemize}
+
+
+\subsection{Not so beautiful examples}
+
+Figure \ref{fig:bads} below contains the three patterns that I thought were not as so beautiful. 
+
+
+\begin{figure}[ht!] 
+  \centering
+  \includegraphics[width=0.7\linewidth]{b1.png}
+  \caption{Choices for beautiful pattern}
+  \label{fig:bads}
+\end{figure}
+
+\noindent Specifics about each picture:
+
+\begin{itemize}
+ \item \textbf{Pattern 1:}
+ 
+  \begin{enumerate}
+  \item The lack of a pattern.
+  \item The flow-like motion of the ``bubbles'' compel the viewer to search for a non-existent pattern.
+  \item No gestalt pattern.
+  \item I'd generate some type of repetition, even if it is only local, but not global.
+  \end{enumerate}
+
+ \item \textbf{Pattern 2:}
+ 
+  \begin{enumerate}
+  \item Overwhelming number of patterns that are hard to distinguish from one another.
+  \item This example is probably one of the most crowded one in the entire set, not only with regards to number of patterns (starts, hexagons, circles, etc.) but also just the sheer number of line segments.
+  \item No gestalt pattern.
+  \item One approach could be, instead of decreasing the patterns, use line thicknesses to promote some of them to focus the viewer's attention.
+  \end{enumerate}
+  
+ \item \textbf{Pattern 3:}
+ 
+  \begin{enumerate}
+  \item It is underwhelming in that in comparison to other examples, (1) there is no distinct pattern, and (2) coloring is uniform.
+  \item In comparison to the previous example, this one makes use of line thickness to focus the viewer's attention but the thicker lines do not generate any pattern (they even intersect outside the frame).
+  \item No gestalt pattern.
+  \item I could imagine that the same desert-type pattern in a zoomed out version could be awe-inspiring since it would be easier to find patterns and appreciate the play between thicker and thinner lines.
+  \end{enumerate}
+  
+
+\end{itemize}
+
+
+
+
+\end{document}

@@ -4,6 +4,8 @@
  * @date 2015-09-01
  * @brief A processing program to visualize a set of balls colliding bounded in a cube bounding box. Assignment 1 for CS 6941 class.
  * Initial code provided by Prof. Rossignac, and as assignment, Can Erdogan fills out the collision checking/handling segment.
+ *
+ * For evaluation of part 3 (individual code), please look primarily between lines 86-175. 
  */
 
 /* *************************************************************************************************************************************************/
@@ -142,6 +144,7 @@ void draw() {
    
   // -------------------------------------------------------------------------------------------------
   // Part 2: Handle physics
+  
   collisions=0;
 
   // Find the first collision time

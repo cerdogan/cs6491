@@ -20,6 +20,7 @@ float spiralScale(pt A, pt B, pt C, pt D) {return d(C,D)/d(A,B);}
 pt spiralCenter(float a, float z, pt A, pt C) {
   float c=cos(a), s=sin(a);
   float D = sq(c*z-1)+sq(s*z);
+  System.out.println("a: " + a + "z: " + z + ", c: " + c + ", z: " + z + ", D: " + D);
   float ex = c*z*A.x - C.x - s*z*A.y;
   float ey = c*z*A.y - C.y + s*z*A.x;
   float x=(ex*(c*z-1) + ey*s*z) / D;

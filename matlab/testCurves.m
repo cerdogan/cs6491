@@ -1,10 +1,11 @@
 % Get the points
 clf
+clear all;
 %points = inputPoints;
-points = [122.0 91.0
-241.0 123.0
-169.0 258.0
-259.0 261.0
+points = [40.0 87.0
+131.0 59.0
+167.0 70.0
+257.0 73.0
 
 
 ];
@@ -58,6 +59,8 @@ m = norm(p2-p3) / norm(p0 - p1);
 pOrigin = p2;
 vx = v32;
 vy = v32perp;
+pA = p2;
+pB = p3;
 for i = 1 : 6
 
   % Compute the new coordinates for P4 and P5 in P2P3 frame
@@ -89,6 +92,58 @@ for i = 1 : 6
   pOrigin = p4;
   vx = v54;
   vy = v54perp;
+  pA = p4;
+  pB = p5;
 end
+
+p2 = pA;
+p3 = pB;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Interpolate between the first (p0p1) and the last frame (p2p3)
+
+% Compute m
+z = norm(p2-p3) / norm(p0 - p1);
+
+% Compute alpha
+v10 = (p1 - p0) / norm(p1 - p0);
+v32 = (p3 - p2) / norm(p3 - p2);
+a = atan2(dot([-v10(2), v10(1)],v32), dot(v10,v32));
+
+% Compute the center of the log spiral
+A = p0; C = p2;
+c = cos(a); s = sin(a);
+D = (c*z-1)*(c*z-1) + (s*z)*(s*z);
+ex = c*z*A(1) - C(1) - s*z*A(2);
+ey = c*z*A(2) - C(2) + s*z*A(1);
+x=(ex*(c*z-1) + ey*s*z) / D;
+y=(ey*(c*z-1) - ex*s*z) / D;
+F = [x,y];
+plot(F(1), F(2), 'o', 'MarkerSize', 5, 'LineWidth', 2);
+  
+% Generate the interpolation
+FP0 = A - F;
+FP1 = p1 - F;
+for t = 0 : 0.01 : 1
+  alpha = t * a;
+  FP0alpha = cos(alpha) * FP0 + sin(alpha) * [-FP0(2), FP0(1)];
+  FP1alpha = cos(alpha) * FP1 + sin(alpha) * [-FP1(2), FP1(1)];
+  P0 = F + (z^t) * FP0alpha;
+  P1 = P0;
+  plot([P0(1); P1(1)], [P0(2); P1(2)], 'ro'); hold on;
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

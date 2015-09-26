@@ -8,8 +8,8 @@ tp2 = [0.0, 0.9, 0.0]';
 clf;
 set(gcf,'Renderer','OpenGL');
 o0 = [-0.5,-1,-1]';
-R0 = euler(pi/4.5,pi/2,pi/3);
-%R0 = euler(0,0,0);
+%R0 = euler(pi/4.5,pi/2,pi/3);
+R0 = euler(0,0,0);
 t0p0 = o0 + R0 * tp0;
 t0p1 = o0 + R0 * tp1;
 t0p2 = o0 + R0 * tp2;
@@ -21,9 +21,9 @@ f0p1 = o0 + R0(:,2);
 f0p2 = o0 + R0(:,3);
 
 o1 = [1,1.2,1.5]';
-o1 = o0;
-R1 = euler(pi/3,pi/1.5,8*pi/6);
-R1 = euler(0,0,pi/2);
+o1 = o0 + [1.5,1.5,0]';
+%R1 = euler(pi/3,pi/1.5,8*pi/6);
+R1 = euler(1.5,0,0);
 s1 = 0.6;
 t1p0 = o1 + s1 * R1 * tp0;
 t1p1 = o1 + s1 * R1 * tp1;
@@ -63,7 +63,7 @@ elseif((norm(f1p1 - f0p1) > 1e-5) && (norm(f1p2 - f0p2) > 1e-5) )
   N = cross(f10p1, f10p2);
 else assert(false);
 end
-N = N / norm(N);
+N = N / norm(N)
 plot3([0; N(1)], [0; N(2)], [0; N(3)], 'k-', 'LineWidth', 3);
 
 % Once we know N, we can solve for theta. In general, for some vector v,
@@ -87,8 +87,7 @@ if(simplify(eq) == 0)
         if(simplify(eq) == 0), assert(false); end;
     end
 end
-    eq
-[C,T] = coeffs(eq, [cth,sth])
+[C,T] = coeffs(eq, [cth,sth]);
 cs = double(C);
 if(numel(cs) > 2)
   cs = -cs / cs(3);
@@ -109,17 +108,29 @@ else
   end
 end
 alpha
-return;
+
 % Compute the focal point by solving for the first vertex in two triangles
-R = vrrotvec2mat([N', alpha]);
+R = vrrotvec2mat([-N', alpha]);
 A = eye(3) - m * R;
 b = (t1p1 - m * R * t0p1);
 F = inv(A) * b;
 
-%plot3(F(1), F(2), F(3), 'ko', 'MarkerSize', 10, 'LineWidth', 5);
-[m * norm(t0p0 - F), norm(t1p0 - F)]
-[m * norm(t0p1 - F), norm(t1p1 - F)]
-[m * norm(t0p2 - F), norm(t1p2 - F)]
+plot3(F(1), F(2), F(3), 'ko', 'MarkerSize', 10, 'LineWidth', 5);
+%[m * norm(t0p0 - F), norm(t1p0 - F)]
+%[m * norm(t0p1 - F), norm(t1p1 - F)]
+%[m * norm(t0p2 - F), norm(t1p2 - F)]
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Interpolate between the two frames
 
+for t = 0 : 0.01 : 1
+  
+  % Rotate the offset FP0 by angle alpha around N
+  P0 = t0p0;
+  FP0 = t0p0 - F;
+  al = t * alpha;
+   cth * t0v10 + sth * NcrossV + (1 - cth) * projV - t1v10;
+  P1 = F + (m^t) * 
+  
+end
 

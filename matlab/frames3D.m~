@@ -8,55 +8,88 @@ tp2 = [0.0, 0.9, 0.0]';
 clf;
 set(gcf,'Renderer','OpenGL');
 o0 = [-0.5,-1,-1]';
-R0 = euler(pi/4.5,pi/2,pi/3);
-%R0 = euler(0,0,0);
+%R0 = euler(pi/4.5,pi/2,pi/3);
+R0 = euler(0,0,0);
 t0p0 = o0 + R0 * tp0;
 t0p1 = o0 + R0 * tp1;
 t0p2 = o0 + R0 * tp2;
 t0s = [t0p0'; t0p1'; t0p2'];
 fill3(t0s(:,1), t0s(:,2), t0s(:,3), 'r'); hold on;
 drawFrame(o0, R0, 'r');
-f0p0 = o0 + R0(:,1);
-f0p1 = o0 + R0(:,2);
-f0p2 = o0 + R0(:,3);
 
 %o1 = [1,1.2,1.5]';
-o1 = 4 * (rand(3,1) - 0.5);
-o1 = [    1.1210
-   -0.4410
-   -1.0332];
-o1 = [
-   -1.3513
-    1.1771
-   -0.7551];
-%o1 = o0 + [1.5,1.5,0]';
+%on = 4 * (rand(3,1) - 0.5);
+on = o0 + [0.5,0.5,0]';
 %R1 = euler(pi/3,pi/1.5,8*pi/6);
 randAngles = 2 * pi * (rand(3,1) - 0.5);
-%randAngles = [  -0.6037
-%   -2.5356
-%   -2.3124];
-randAngles = [
-    0.1793
-   -2.1008
-    0.6408];
-R1 = euler(randAngles(1), randAngles(2), randAngles(3));
-%R1 = euler(1.5,0,0);
-s1 = 0.6;
-t1p0 = o1 + s1 * R1 * tp0;
-t1p1 = o1 + s1 * R1 * tp1;
-t1p2 = o1 + s1 * R1 * tp2;
-t1s = [t1p0'; t1p1'; t1p2'];
-fill3(t1s(:,1), t1s(:,2), t1s(:,3), 'g'); hold on;
-f1p0 = o1 + R1(:,1);
-f1p1 = o1 + R1(:,2);
-f1p2 = o1 + R1(:,3);
+%Rn = euler(randAngles(1), randAngles(2), randAngles(3));
+Rn = euler(0.2,0,0);
+sn = 0.9; %max(rand, 0.3);
+tnp0 = on + sn * Rn * tp0;
+tnp1 = on + sn * Rn * tp1;
+tnp2 = on + sn * Rn * tp2;
+tns = [tnp0'; tnp1'; tnp2'];
+fill3(tns(:,1), tns(:,2), tns(:,3), 'g'); hold on;
 
-drawFrame(o1, R1, 'k');
+drawFrame(on, Rn, 'k');
 axis(2.5 * [-1 1 -1 1 -1 1]);
 axis square;
 view([-110, 30])
+view([-180, 90])
 grid on;
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Interpolate between the first frame (R0,o0) and the next one (Rn, on)
+% to get a final frame (R1,o1)
+
+% Get the projections of the next triangle onto the normalized vectors of 
+% the first triangle
+w0x = (t0p1 - t0p0) / norm(t0p1 - t0p0);
+w0z = cross(w0x, (t0p2 - t0p0) / norm(t0p2 - t0p0));
+w0z
+w0z = w0z / norm(w0z);
+w0y = cross(w0z, w0x);
+w0y = w0y / norm(w0y);
+[w0x', w0y', w0z']
+proj0x = dot((tnp0 - t0p0), w0x);
+proj0y = dot((tnp0 - t0p0), w0y);
+proj0z = dot((tnp0 - t0p0), w0z);
+proj1x = dot((tnp1 - t0p0), w0x);
+proj1y = dot((tnp1 - t0p0), w0y);
+proj1z = dot((tnp1 - t0p0), w0z);
+proj2x = dot((tnp2 - t0p0), w0x);
+proj2y = dot((tnp2 - t0p0), w0y);
+proj2z = dot((tnp2 - t0p0), w0z);
+
+op = tnp0;
+wpx = (tnp1 - tnp0) / norm(tnp1 - tnp0);
+wpz = cross(wpx, (tnp2 - tnp0) / norm(tnp2 - tnp0));
+wpz = wpz / norm(wpz);
+wpy = cross(wpz, wpx);
+wpy = wpy / norm(wpy);
+for i = 1 : 6
+  
+  % Generate the new triangle points 
+  tnp0 = op + sn^i * (proj0x * wpx + proj0y * wpy + proj0z * wpz); 
+  tnp1 = op + sn^i * (proj1x * wpx + proj1y * wpy + proj1z * wpz); 
+  tnp2 = op + sn^i * (proj2x * wpx + proj2y * wpy + proj2z * wpz); 
+
+  % Visualize the triangle
+  tns = [tnp0'; tnp1'; tnp2']
+  fill3(tns(:,1), tns(:,2), tns(:,3), 'g'); hold on;
+
+  % Set the next "previous" frame information
+  op = tnp0;
+  wpx = (tnp1 - tnp0) / norm(tnp1 - tnp0);
+  wpz = cross(wpx, (tnp2 - tnp0) / norm(tnp2 - tnp0));
+  wpz = wpz / norm(wpz);
+  wpy = cross(wpz, wpx);
+  wpy = wpy / norm(wpy);
+  
+end
+
+t1p0 = tnp0;
+return;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Given the triangle points, find the magnification m, the normal direction
 % of the spiral, N, and the angle alpha
@@ -65,9 +98,6 @@ grid on;
 m = norm(t1p1 - t1p0) / norm(t0p1 - t0p0);
 
 % Define three normalized edge vector for each triangle
-w0v10 = (t0p1 - t0p0) / norm(t0p1 - t0p0);
-w0v20 = (t0p2 - t0p0) / norm(t0p2 - t0p0);
-w0v21 = (t0p2 - t0p1) / norm(t0p2 - t0p1);
 w1v10 = (t1p1 - t1p0) / norm(t1p1 - t1p0);
 w1v20 = (t1p2 - t1p0) / norm(t1p2 - t1p0);
 w1v21 = (t1p2 - t1p1) / norm(t1p2 - t1p1);
@@ -80,34 +110,7 @@ N3 = cross((w1v20 - w0v20), (w1v21 - w0v21));
 N1 = N1 / norm(N1);
 N2 = N2 / norm(N2);
 N3 = N3 / norm(N3);
-N = N1;
-%[N1, N2, N3]
-% return;
-% if((norm(f1p0 - f0p0) > 1e-5) && (norm(f1p1 - f0p1) > 1e-5) )
-%   'case N 1'
-%   f10p0 = (f1p0 - f0p0) / norm(f1p0 - f0p0);
-%   f10p1 = (f1p1 - f0p1) / norm(f1p1 - f0p1);
-%   N = cross(f10p0, f10p1);
-% end
-% if((norm(f1p0 - f0p0) > 1e-5) && (norm(f1p2 - f0p2) > 1e-5) )
-%   f10p0 = (f1p0 - f0p0) / norm(f1p0 - f0p0);
-%   f10p2 = (f1p2 - f0p2) / norm(f1p2 - f0p2);
-%   N2 = cross(f10p0, f10p2);
-%   N2 = N2 / norm(N2);
-% end
-% if((norm(f1p1 - f0p1) > 1e-5) && (norm(f1p2 - f0p2) > 1e-5) )
-%   f10p1 = (f1p1 - f0p1) / norm(f1p1 - f0p1);
-%   f10p2 = (f1p2 - f0p2) / norm(f1p2 - f0p2);
-%   N3 = cross(f10p1, f10p2);
-%   N3 = N3 / norm(N3);
-% end
-% %else assert(false);
-% %end
-% N = N / norm(N)
-% [N, N2, N3]
-%plot3([0; N(1)], [0; N(2)], [0; N(3)], 'k-', 'LineWidth', 3);
-
-N = -N;
+N = (N1 + N2 + N3) / 3;
 
 % Project the normalized edge vectors onto the plane that contains the
 % origin and perpendicular to N and find the angle between them.
@@ -117,78 +120,18 @@ w1v10p = w1v10 - dot(N, w1v10) * N;
 w1v10pn = w1v10p / norm(w1v10p);
 sin(dot(w0v10pn, w1v10pn))
 alpha = atan2(norm(cross(w0v10pn, w1v10pn)), dot(w0v10pn, w1v10pn));
-%acos(dot(w0v10pn, w1v10pn));
-%if(sin(dot(w0v10pn, w1v10pn)) < 0)
-%  alpha = -alpha;
-%end
-
-
-% Once we know N, we can solve for theta. In general, for some vector v,
-% v' = cos(th) v + sin(th) (N x v) + (1 - cos(th)) (N . v) N. If v is
-% a vector that represents a triangle segment, then the equation can
-% be written as "a cos(th) + b sin(th) = 1" and solved by observing that
-% "sqrt(a*a+b*b)sin(th+atan2(b,a)) = 1".
-% t0v10 = (t0p1 - t0p0) / norm(t0p1 - t0p0);
-% t1v10 = (t1p1 - t1p0) / norm(t1p1 - t1p0);
-% [t0v10', t1v10']
-% NcrossV = cross(N, t0v10);
-% projV = N * dot(N, t0v10);
-% syms cth sth;
-% eq = cth * t0v10(1) + sth * NcrossV(1) + (1 - cth) * projV(1) - t1v10(1);
-% eq
-% if(simplify(eq) == 0)
-%     'case 2'
-%     eq = cth * t0v10(2) + sth * NcrossV(2) + (1 - cth) * projV(2) - t1v10(2);
-%     if(simplify(eq) == 0)
-%         'case 3'
-%         eq = cth * t0v10(3) + sth * NcrossV(3) + (1 - cth) * projV(3) - t1v10(3);
-%         if(simplify(eq) == 0), assert(false); end;
-%     end
-% end
-% [C,T] = coeffs(eq, [cth,sth]);
-% cs = double(C);
-% if(numel(cs) > 2)
-%   'solving case 1'
-%   cs = -cs / cs(3);
-%   a = cs(1); b = cs(2);
-%   [a,b]
-%   temp = 1 / sqrt(a*a+b*b);
-%   temp
-%   alpha = asin(temp) - atan2(b,a);
-% else
-%   
-%   % a cos(th) = 1 case
-%   if(T(1) == cth)
-%     'solving case 2'
-%     cs = -cs / cs(2);
-%     alpha = acos(1 / cs(1));
-%     
-%   % a sin(th) = 1 case
-%   elseif(T(1) == sth)
-%     'solving case 3'
-%     cs = -cs / cs(2);
-%     alpha = asin(1 / cs(1));
-%   end
-% end
-% alpha
-% 
-% %N = -N;
-%alpha = -pi/2 + alpha;
-[N', alpha]
+if(dot(cross(w0v10pn, w1v10pn), N) < 0)
+  alpha = -alpha;
+end;
 
 % Compute the focal point by solving for the first vertex in two triangles
 R = vrrotvec2mat([N', alpha]);
 A = eye(3) - m * R;
 b = (t1p1 - m * R * t0p1);
 f = inv(A) * b;
-N
 fN = f + N;
 plot3([f(1); fN(1)], [f(2); fN(2)], [f(3); fN(3)], 'k-', 'LineWidth', 3);
-
 plot3(f(1), f(2), f(3), 'ko', 'MarkerSize', 10, 'LineWidth', 5);
-%[m * norm(t0p0 - f), norm(t1p0 - f)]
-%[m * norm(t0p1 - f), norm(t1p1 - f)]
-%[m * norm(t0p2 - f), norm(t1p2 - f)]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Interpolate between the two frames
@@ -215,7 +158,5 @@ for t = 0 : 0.05 : 1
   plot3(newPs(3,1), newPs(3,2), newPs(3,3), 'o'); hold on;
   fill3(newPs(:,1), newPs(:,2), newPs(:,3), [1-t,t,0], 'FaceAlpha', 0.2); hold on;
 
-  
-  
 end
 

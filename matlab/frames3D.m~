@@ -8,8 +8,8 @@ tp2 = [0.0, 0.9, 0.0]';
 clf;
 set(gcf,'Renderer','OpenGL');
 o0 = [-0.5,-1,-1]';
-%R0 = euler(pi/4.5,pi/2,pi/3);
-R0 = euler(0,0,0);
+R0 = euler(pi/4.5,pi/2,pi/3);
+%R0 = euler(0,0,0);
 t0p0 = o0 + R0 * tp0;
 t0p1 = o0 + R0 * tp1;
 t0p2 = o0 + R0 * tp2;
@@ -22,7 +22,7 @@ f0p2 = o0 + R0(:,3);
 
 o1 = [1,1.2,1.5]';
 o1 = o0;
-%R1 = euler(pi/3,pi/1.5,8*pi/6);
+R1 = euler(pi/3,pi/1.5,8*pi/6);
 R1 = euler(0,0,pi/2);
 s1 = 0.6;
 t1p0 = o1 + s1 * R1 * tp0;
@@ -39,7 +39,7 @@ axis(2.5 * [-1 1 -1 1 -1 1]);
 axis square;
 view([-110, 30])
 grid on;
-return;
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Given the triangle points, find the magnification m, the normal direction
 % of the spiral, N, and the angle alpha
@@ -63,7 +63,7 @@ elseif((norm(f1p1 - f0p1) > 1e-5) && (norm(f1p2 - f0p2) > 1e-5) )
   N = cross(f10p1, f10p2);
 else assert(false);
 end
-N = N / norm(N)
+N = N / norm(N);
 plot3([0; N(1)], [0; N(2)], [0; N(3)], 'k-', 'LineWidth', 3);
 
 % Once we know N, we can solve for theta. In general, for some vector v,
@@ -81,7 +81,7 @@ eq = cth * t0v10(1) + sth * NcrossV(1) + (1 - cth) * projV(1) - t1v10(1);
 if(simplify(eq) == 0)
     'case 2'
     eq = cth * t0v10(2) + sth * NcrossV(2) + (1 - cth) * projV(2) - t1v10(2);
-    if(1 || simplify(eq) == 0)
+    if(simplify(eq) == 0)
         'case 3'
         eq = cth * t0v10(3) + sth * NcrossV(3) + (1 - cth) * projV(3) - t1v10(3);
         if(simplify(eq) == 0), assert(false); end;
@@ -110,7 +110,6 @@ else
 end
 alpha
 return;
-
 % Compute the focal point by solving for the first vertex in two triangles
 R = vrrotvec2mat([N', alpha]);
 A = eye(3) - m * R;

@@ -1,5 +1,0 @@
-%% @file drawFrame.m
-%% @author Can Erdogan
-%% @date 2015-09-25
-%% @brief Draws a frame in 3D for a given rotation matrix R
-%% and origin o.
